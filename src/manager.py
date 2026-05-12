@@ -71,4 +71,43 @@ class Manager:
             )
         for tenant in tenants_in_apartment ] 
     
+    def get_debtors(self, apartment_key: str, year: int, month: int) -> List[Tenant] | None:
+        if month < 1 or month > 12:
+            raise ValueError("Month must be between 1 and 12")
+        if apartment_key not in self.apartments:
+            return None
+        
+        tenants_in_apartment = [tenant for tenant in self.tenants.values() if tenant.apartment == apartment_key]
+        
+        debtors = []
+        for tenant in tenants_in_apartment:
+            total_transfers = sum(
+                transfer.amount_pln 
+                for transfer in self.transfers 
+                if transfer.tenant == tenant.name and 
+                   transfer.settlement_month == month and 
+                   transfer.settlement_year == year
+            )
+            
+            if total_transfers < tenant.rent_pln:
+                debtors.append(tenant)
+        
+        return debtors
+
+    def find_apartments_without_bills(self, apartment_key: str, year: int, month: int) -> List[Apartment] | None:
+        if month < 1 or month > 12:
+            raise ValueError("Month must be between 1 and 12")
+        if apartment_key not in self.apartments:
+            return None
+        
+        has_bills = any(
+            bill.apartment == apartment_key and 
+            bill.settlement_month == month and 
+            bill.settlement_year == year
+            for bill in self.bills
+        )
+        
+        return [] if has_bills else [self.apartments[apartment_key]]
+
+    
     
